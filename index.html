@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CSV Match Cards</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Material Web (no build) via importmap + esm.run -->
+  <script type="importmap">
+  {
+    "imports": {
+      "@material/web/": "https://esm.run/@material/web/"
+    }
+  }
+  </script>
+  <script type="module">
+    import '@material/web/all.js';
+    import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+    document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+  </script>
+
+  <!-- PapaParse (CSV parsing) -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <link rel="stylesheet" href="./styles.css" />
+  <script defer src="./app.js"></script>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="brand md-typescale-title-large">CSV Match Cards</div>
+    <div class="actions">
+      <md-filled-button id="btnOpenImport">Import CSV</md-filled-button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <div class="panelHeader">
+        <div class="panelTitle md-typescale-title-medium">Round setup</div>
+      </div>
+
+      <div class="setupGrid">
+        <md-outlined-text-field id="rowsPerRound" type="number" label="Rows per round (K)" value="10"></md-outlined-text-field>
+
+        <div class="row">
+          <md-filled-button id="btnStart" disabled>Start / Restart round</md-filled-button>
+          <md-outlined-button id="btnPrev" disabled>Prev</md-outlined-button>
+          <md-outlined-button id="btnNext" disabled>Next</md-outlined-button>
+        </div>
+
+        <div class="row">
+          <md-outlined-button id="btnShuffle" disabled>Shuffle unsolved</md-outlined-button>
+        </div>
+
+        <div class="hint md-typescale-body-small">
+          Tip: Drag cards into slots. Wrong groups stay red until fixed.
+        </div>
+      </div>
+
+      <div class="colsBlock">
+        <div class="md-typescale-title-small">Columns (select 2–6)</div>
+        <div id="colsList" class="colsList muted">
+          Import a CSV to select columns.
+        </div>
+      </div>
+    </section>
+
+    <section class="board">
+      <div class="boardHeader">
+        <div class="md-typescale-title-medium">Cards</div>
+        <div id="roundInfo" class="md-typescale-body-small muted"></div>
+      </div>
+
+      <div id="cardPool" class="cardPool"></div>
+
+      <div class="boardHeader">
+        <div class="md-typescale-title-medium">Groups</div>
+        <div class="md-typescale-body-small muted">Fill each group with one row, respecting column order.</div>
+      </div>
+
+      <div id="groups" class="groups"></div>
+    </section>
+  </main>
+
+  <!-- Import dialog -->
+  <md-dialog id="importDialog">
+    <div slot="headline">Import CSV</div>
+
+    <div slot="content" class="dialogContent">
+      <div id="dropzone" class="dropzone">
+        Drop CSV here or click to browse
+      </div>
+      <input id="fileInput" type="file" accept=".csv,text/csv" />
+
+      <div class="dialogRow">
+        <label class="label">Delimiter</label>
+        <select id="delimiterSelect" class="select">
+          <option value=",">Comma (,)</option>
+          <option value=";">Semicolon (;)</option>
+          <option value="\t">Tab (\t)</option>
+          <option value="|">Pipe (|)</option>
+        </select>
+      </div>
+
+      <label class="dialogRow">
+        <md-checkbox id="hasHeader" checked></md-checkbox>
+        <span>First row contains column names</span>
+      </label>
+
+      <div class="dialogRow">
+        <label class="label">Encoding</label>
+        <select id="encodingSelect" class="select">
+          <option value="utf-8" selected>UTF-8</option>
+          <option value="windows-1252">Windows-1252 (Excel/LibreOffice)</option>
+          <option value="iso-8859-1">ISO-8859-1</option>
+        </select>
+      </div>
+
+      <div class="previewBlock">
+        <div class="md-typescale-title-small">Preview (first 5 rows)</div>
+        <div id="preview" class="preview"></div>
+      </div>
+
+      <div id="importError" class="error"></div>
+    </div>
+
+    <div slot="actions">
+      <md-text-button id="btnCloseImport">Close</md-text-button>
+      <md-filled-button id="btnApplyImport" disabled>Apply</md-filled-button>
+    </div>
+  </md-dialog>
+</body>
+</html>
