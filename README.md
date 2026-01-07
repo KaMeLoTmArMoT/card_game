@@ -19,7 +19,9 @@
 CSV Match Cards is a tiny browser-only game that turns CSV rows into draggable cards.
 The goal is to build correct groups: each group must contain cards from the same CSV row, respecting the chosen column order.
 
-<img src="assets/card_game_example.png" width="720" alt="Main UI">
+<p align="center">
+   <img src="assets/card_game_example.png" width="720" alt="Main UI">
+</p>
 
 ### Key Features
 
@@ -66,8 +68,9 @@ The goal is to build correct groups: each group must contain cards from the same
 1. Open the app (demo or local).
 2. Click **Import CSV** (or drop the file into the import dropzone).
 
-<img src="assets/card_game_import.png" width="720" alt="Main UI">
-
+<p align="center">
+   <img src="assets/card_game_import.png" width="360" alt="Main UI">
+</p>
 
 3. Enable “First row contains column names” if your CSV has headers.
 4. Pick delimiter if needed, then click **Apply**.
