@@ -6,11 +6,11 @@
     <br />
     Import a CSV → generate cards → drag & drop to match rows.
     <br /><br />
-    <a href="https://kamelotmarmot.github.io/card_game/"><strong>View Demo »</strong></a>
+    <a href="https://kamelotmarmot.github.io/CardMatch/"><strong>View Demo »</strong></a>
     ·
-    <a href="https://github.com/KaMeLoTmArMoT/card_game/issues">Report Bug</a>
+    <a href="https://github.com/KaMeLoTmArMoT/CardMatch/issues">Report Bug</a>
     ·
-    <a href="https://github.com/KaMeLoTmArMoT/card_game/issues">Request Feature</a>
+    <a href="https://github.com/KaMeLoTmArMoT/CardMatch/issues">Request Feature</a>
   </p>
 </div>
 
@@ -50,8 +50,8 @@ The goal is to build correct groups: each group must contain cards from the same
 
 1. Clone the repo:
    ```bash
-   git clone https://github.com/KaMeLoTmArMoT/card_game.git
-   cd card_game
+   git clone https://github.com/KaMeLoTmArMoT/CardMatch.git
+   cd CardMatch
    ```
 
 2. Run a local static server (recommended):
@@ -109,7 +109,7 @@ Headers:
 - Optional “tap to place” mode (non-drag alternative).
 - Export/import round state (optional).
 
-See the [open issues](https://github.com/KaMeLoTmArMoT/card_game/issues).
+See the [open issues](https://github.com/KaMeLoTmArMoT/CardMatch/issues).
 
 ## Contributing
 
@@ -125,7 +125,7 @@ For bug reports, please include:
 
 ## License
 
-This project is licensed under the MIT License — see [`LICENSE`](https://github.com/KaMeLoTmArMoT/card_game/blob/master/LICENSE).
+This project is licensed under the MIT License — see [`LICENSE`](https://github.com/KaMeLoTmArMoT/CardMatch/blob/master/LICENSE).
 
 
 ## Acknowledgments
