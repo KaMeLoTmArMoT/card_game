@@ -378,7 +378,7 @@ function renderCard(card) {
   const hintBtn = el.querySelector('.hintBtn');
 
   hintBtn.addEventListener('pointerdown', (ev) => {
-    ev.stopPropagation(); // prevent starting drag from the parent card [web:173]
+    ev.stopPropagation(); // prevent starting drag from the parent card
   });
 
   hintBtn.addEventListener('click', (ev) => {
@@ -688,7 +688,7 @@ els.btnShuffle.addEventListener('click', shuffleUnsolved);
 // Dropzone: click -> open picker
 els.dropzone.addEventListener('click', () => els.fileInput.click());
 
-// Prevent default browser behavior for drag/drop and handle file drop [web:165]
+// Prevent default browser behavior for drag/drop and handle file drop
 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evtName => {
   els.dropzone.addEventListener(evtName, (ev) => {
     ev.preventDefault();
