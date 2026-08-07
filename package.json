@@ -1,0 +1,23 @@
+{
+	"name": "card-match",
+	"private": true,
+	"version": "1.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite --host",
+		"build": "tsc && vite build",
+		"preview": "vite preview",
+		"lint": "biome check .",
+		"format": "biome check --write ."
+	},
+	"dependencies": {
+		"@material/web": "^2.2.0",
+		"papaparse": "^5.4.1"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.6",
+		"@types/papaparse": "^5.3.15",
+		"typescript": "^5.6.3",
+		"vite": "^5.4.10"
+	}
+}

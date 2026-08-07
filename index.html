@@ -8,25 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 
-  <!-- Material Web (no build) via importmap + esm.run -->
-  <script type="importmap">
-  {
-    "imports": {
-      "@material/web/": "https://esm.run/@material/web/"
-    }
-  }
-  </script>
-  <script type="module">
-    import '@material/web/all.js';
-    import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
-    document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
-  </script>
-
-  <!-- PapaParse (CSV parsing) -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-
-  <link rel="stylesheet" href="./styles.css" />
-  <script defer src="./app.js"></script>
+  <script type="module" src="/src/main.ts"></script>
 </head>
 
 <body>
@@ -169,7 +151,7 @@
         <md-outlined-text-field id="aiRowsCount" type="number" label="Rows to generate (5-30)" value="15" min="5" max="30"></md-outlined-text-field>
       </div>
 
-      <div id="aiStatus" class="statusMessage muted">Model: mistral-small-latest</div>
+      <div id="aiStatus" class="statusMessage muted">Model: mistral-medium-2508</div>
       <div id="aiError" class="error"></div>
     </div>
 
