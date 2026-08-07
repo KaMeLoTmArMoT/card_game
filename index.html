@@ -34,6 +34,7 @@
     <div class="brand md-typescale-title-large">CSV Match Cards</div>
     <div class="actions">
       <md-filled-button id="btnOpenImport">Import CSV</md-filled-button>
+      <md-outlined-button id="btnOpenAi">✨ AI Generate</md-outlined-button>
     </div>
   </header>
 
@@ -64,7 +65,7 @@
       <div class="colsBlock">
         <div class="md-typescale-title-small">Columns (select 2–6)</div>
         <div id="colsList" class="colsList muted">
-          Import a CSV to select columns.
+          Import a CSV or generate with AI to select columns.
         </div>
       </div>
     </section>
@@ -131,6 +132,50 @@
     <div slot="actions">
       <md-text-button id="btnCloseImport">Close</md-text-button>
       <md-filled-button id="btnApplyImport" disabled>Apply</md-filled-button>
+    </div>
+  </md-dialog>
+
+  <!-- AI Generator dialog -->
+  <md-dialog id="aiDialog">
+    <div slot="headline">✨ AI Card Generator (Mistral)</div>
+
+    <div slot="content" class="dialogContent">
+      <div class="presetBlock">
+        <div class="md-typescale-title-small">Presets</div>
+        <div id="presetChips" class="presetChips">
+          <button type="button" class="presetChip" data-theme="Spanish Vocabulary (A2)" data-cols="3" data-custom-cols="Spanish, English, Example Sentence">🇪🇸 Spanish</button>
+          <button type="button" class="presetChip" data-theme="World Capitals & Landmarks" data-cols="3" data-custom-cols="Country, Capital, Landmark">🌍 Capitals</button>
+          <button type="button" class="presetChip" data-theme="Python Data Structures & Operations" data-cols="2" data-custom-cols="Concept, Description">🐍 Python</button>
+          <button type="button" class="presetChip" data-theme="Historical Events & Dates" data-cols="3" data-custom-cols="Year, Event, Location">📜 History</button>
+          <button type="button" class="presetChip" data-theme="Science Trivia" data-cols="2" data-custom-cols="Term, Definition">🔬 Science</button>
+        </div>
+      </div>
+
+      <md-outlined-text-field id="aiApiKey" type="password" label="Mistral API Key (BYOK)"></md-outlined-text-field>
+
+      <md-outlined-text-field id="aiPassphrase" type="password" label="PIN / Passphrase (optional encryption)"></md-outlined-text-field>
+
+      <label class="dialogRow">
+        <md-checkbox id="aiSaveKey" checked></md-checkbox>
+        <span>Remember API key locally</span>
+      </label>
+
+      <md-outlined-text-field id="aiTheme" label="Theme / Topic" value="Spanish Vocabulary (A2)"></md-outlined-text-field>
+
+      <md-outlined-text-field id="aiCustomCols" label="Optional Column Names (comma-separated)" value="Spanish, English, Example Sentence"></md-outlined-text-field>
+
+      <div class="dialogGrid2">
+        <md-outlined-text-field id="aiColsCount" type="number" label="Cols per card (2-6)" value="3" min="2" max="6"></md-outlined-text-field>
+        <md-outlined-text-field id="aiRowsCount" type="number" label="Rows to generate (5-30)" value="15" min="5" max="30"></md-outlined-text-field>
+      </div>
+
+      <div id="aiStatus" class="statusMessage muted">Model: mistral-medium-2508</div>
+      <div id="aiError" class="error"></div>
+    </div>
+
+    <div slot="actions">
+      <md-text-button id="btnCloseAi">Close</md-text-button>
+      <md-filled-button id="btnGenerateAi">Generate Cards</md-filled-button>
     </div>
   </md-dialog>
 </body>

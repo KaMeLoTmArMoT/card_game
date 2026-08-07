@@ -26,6 +26,22 @@ const els = {
 
   encodingSelect: document.querySelector('#encodingSelect'),
   dropzone: document.querySelector('#dropzone'),
+
+  // AI Generator UI
+  btnOpenAi: document.querySelector('#btnOpenAi'),
+  aiDialog: document.querySelector('#aiDialog'),
+  btnCloseAi: document.querySelector('#btnCloseAi'),
+  btnGenerateAi: document.querySelector('#btnGenerateAi'),
+  aiApiKey: document.querySelector('#aiApiKey'),
+  aiPassphrase: document.querySelector('#aiPassphrase'),
+  aiSaveKey: document.querySelector('#aiSaveKey'),
+  aiTheme: document.querySelector('#aiTheme'),
+  aiCustomCols: document.querySelector('#aiCustomCols'),
+  aiColsCount: document.querySelector('#aiColsCount'),
+  aiRowsCount: document.querySelector('#aiRowsCount'),
+  aiStatus: document.querySelector('#aiStatus'),
+  aiError: document.querySelector('#aiError'),
+  presetChips: document.querySelector('#presetChips'),
 };
 
 const state = {
@@ -712,6 +728,233 @@ els.dropzone.addEventListener('drop', (ev) => {
 if (window.matchMedia('(max-width: 900px)').matches) {
   els.rowsPerRound.value = '5';
 }
+
+/* --- Web Crypto API Encryption (PBKDF2 + AES-GCM) --- */
+async function deriveCryptoKey(passphrase, salt) {
+  const enc = new TextEncoder();
+  const keyMaterial = await window.crypto.subtle.importKey(
+    'raw',
+    enc.encode(passphrase),
+    'PBKDF2',
+    false,
+    ['deriveKey']
+  );
+  return window.crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt,
+      iterations: 100000,
+      hash: 'SHA-256'
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptApiKey(apiKey, passphrase) {
+  const enc = new TextEncoder();
+  const salt = window.crypto.getRandomValues(new Uint8Array(16));
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveCryptoKey(passphrase, salt);
+  const ciphertext = await window.crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    enc.encode(apiKey)
+  );
+  return JSON.stringify({
+    salt: Array.from(salt),
+    iv: Array.from(iv),
+    ciphertext: Array.from(new Uint8Array(ciphertext))
+  });
+}
+
+async function decryptApiKey(encryptedJson, passphrase) {
+  const bundle = JSON.parse(encryptedJson);
+  const salt = new Uint8Array(bundle.salt);
+  const iv = new Uint8Array(bundle.iv);
+  const ciphertext = new Uint8Array(bundle.ciphertext);
+  const key = await deriveCryptoKey(passphrase, salt);
+  const decrypted = await window.crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    ciphertext
+  );
+  return new TextDecoder().decode(decrypted);
+}
+
+/* --- AI Card Generator Logic --- */
+function openAiDialog() {
+  els.aiError.textContent = '';
+  els.aiStatus.textContent = 'Model: mistral-medium-2508';
+
+  const plainKey = localStorage.getItem('mistral_api_key');
+  const encKey = localStorage.getItem('mistral_encrypted_key');
+
+  if (plainKey) {
+    els.aiApiKey.value = plainKey;
+  } else if (encKey) {
+    els.aiStatus.textContent = 'Encrypted key found. Enter PIN/Passphrase to unlock or enter key.';
+  }
+
+  els.aiDialog.open = true;
+}
+
+function closeAiDialog() {
+  els.aiDialog.open = false;
+}
+
+function handlePresetClick(e) {
+  const chip = e.target.closest('.presetChip');
+  if (!chip) return;
+  const theme = chip.dataset.theme;
+  const cols = chip.dataset.cols;
+  const customCols = chip.dataset.customCols;
+
+  if (theme) els.aiTheme.value = theme;
+  if (cols) els.aiColsCount.value = cols;
+  if (customCols) els.aiCustomCols.value = customCols;
+}
+
+async function generateCardsWithMistral() {
+  els.aiError.textContent = '';
+  els.aiStatus.textContent = 'Preparing request...';
+
+  let apiKey = els.aiApiKey.value.trim();
+  const passphrase = els.aiPassphrase.value.trim();
+
+  const encKey = localStorage.getItem('mistral_encrypted_key');
+  if (!apiKey && encKey && passphrase) {
+    try {
+      apiKey = await decryptApiKey(encKey, passphrase);
+      els.aiApiKey.value = apiKey;
+    } catch (err) {
+      els.aiError.textContent = 'Failed to decrypt API key with provided PIN/Passphrase.';
+      els.aiStatus.textContent = '';
+      return;
+    }
+  }
+
+  if (!apiKey) {
+    els.aiError.textContent = 'Mistral API key is required.';
+    els.aiStatus.textContent = '';
+    return;
+  }
+
+  const theme = els.aiTheme.value.trim() || 'General Knowledge';
+  const colCount = Math.max(2, Math.min(6, parseInt(els.aiColsCount.value, 10) || 3));
+  const rowCount = Math.max(5, Math.min(30, parseInt(els.aiRowsCount.value, 10) || 15));
+  const customColsRaw = els.aiCustomCols.value.trim();
+  const customCols = customColsRaw ? customColsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+  // Key storage preference
+  if (els.aiSaveKey.checked) {
+    if (passphrase) {
+      try {
+        const encrypted = await encryptApiKey(apiKey, passphrase);
+        localStorage.setItem('mistral_encrypted_key', encrypted);
+        localStorage.removeItem('mistral_api_key');
+      } catch (err) {
+        console.error('Encryption failed:', err);
+      }
+    } else {
+      localStorage.setItem('mistral_api_key', apiKey);
+      localStorage.removeItem('mistral_encrypted_key');
+    }
+  } else {
+    localStorage.removeItem('mistral_api_key');
+    localStorage.removeItem('mistral_encrypted_key');
+  }
+
+  els.btnGenerateAi.disabled = true;
+  els.aiStatus.textContent = 'Generating cards via Mistral API (mistral-medium-2508)...';
+
+  let colInstruction = `Generate ${colCount} descriptive header names in the "headers" array.`;
+  if (customCols.length > 0) {
+    colInstruction = `Use these exact header names in "headers": ${JSON.stringify(customCols)}.`;
+  }
+
+  const systemPrompt = `You are a helpful assistant generating matching tuples/cards for a learning card game.
+Return ONLY a valid JSON object with the following schema:
+{
+  "headers": array of ${colCount} string column names,
+  "data": array of ${rowCount} rows (each row is an array of exactly ${colCount} string values)
+}
+${colInstruction}
+Ensure that elements across a row strictly match each other for the topic, and each row has unique/distinct content. Do NOT include markdown code fences or extra text outside JSON.`;
+
+  const userPrompt = `Topic: "${theme}". Generate ${rowCount} distinct rows, each containing ${colCount} matching values.`;
+
+  try {
+    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'mistral-medium-2508',
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({}));
+      const msg = errJson.message || errJson.error?.message || `HTTP ${response.status} ${response.statusText}`;
+      throw new Error(msg);
+    }
+
+    const resData = await response.json();
+    const rawContent = resData.choices?.[0]?.message?.content;
+    if (!rawContent) throw new Error('Received empty response content from Mistral');
+
+    const parsed = JSON.parse(rawContent);
+    if (!parsed.data || !Array.isArray(parsed.data) || parsed.data.length === 0) {
+      throw new Error('Invalid JSON format: missing or empty "data" array');
+    }
+
+    const headers = Array.isArray(parsed.headers) && parsed.headers.length > 0
+      ? parsed.headers.map(h => String(h).trim())
+      : Array.from({ length: colCount }, (_, i) => `Col ${i + 1}`);
+
+    const dataRows = parsed.data.map(r => r.map(c => String(c ?? '')));
+
+    // Apply to game state
+    state.firstRowHeader = true;
+    const fullRows = [headers, ...dataRows];
+    applyParsedRows(fullRows);
+
+    // Select all generated columns by default if colCount >= 2
+    state.selectedCols = Array.from({ length: Math.min(headers.length, 6) }, (_, i) => i);
+    renderColumnsSelector();
+    enableSetupButtons();
+    updateRoundInfo();
+
+    els.aiStatus.textContent = `Generated ${dataRows.length} rows! Review in setup panel to start.`;
+    setTimeout(() => {
+      closeAiDialog();
+      els.aiStatus.textContent = 'Model: mistral-medium-2508';
+    }, 1000);
+
+  } catch (err) {
+    console.error('AI Card Generation Error:', err);
+    els.aiError.textContent = `Error: ${err.message}`;
+    els.aiStatus.textContent = '';
+  } finally {
+    els.btnGenerateAi.disabled = false;
+  }
+}
+
+// Wire AI Generator UI
+if (els.btnOpenAi) els.btnOpenAi.addEventListener('click', openAiDialog);
+if (els.btnCloseAi) els.btnCloseAi.addEventListener('click', closeAiDialog);
+if (els.btnGenerateAi) els.btnGenerateAi.addEventListener('click', generateCardsWithMistral);
+if (els.presetChips) els.presetChips.addEventListener('click', handlePresetClick);
 
 // Initial
 updateRoundInfo();

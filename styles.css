@@ -419,3 +419,39 @@ body.successFlash::before{
   from { transform: scale(0.985); }
   to   { transform: scale(1); }
 }
+
+/* AI Generator Dialog styling */
+.presetBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.presetChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.presetChip {
+  background: rgba(122, 162, 255, 0.12);
+  border: 1px solid rgba(122, 162, 255, 0.3);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 12px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.presetChip:hover {
+  background: rgba(122, 162, 255, 0.25);
+  border-color: var(--accent);
+}
+.dialogGrid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.statusMessage {
+  font-size: 12px;
+}
+
