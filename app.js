@@ -78,6 +78,7 @@ function clampInt(v, min, max) {
 }
 
 function openImport() {
+  console.log('[CSV Match Cards] Opening Import dialog');
   els.importError.textContent = '';
   els.preview.innerHTML = '';
   els.btnApplyImport.disabled = !state.file;
@@ -85,6 +86,7 @@ function openImport() {
 }
 
 function closeImport() {
+  console.log('[CSV Match Cards] Closing Import dialog');
   els.importDialog.open = false;
 }
 
@@ -95,6 +97,7 @@ function parsePreview() {
   els.preview.innerHTML = '';
 
   const delimiter = els.delimiterSelect.value === '\\t' ? '\t' : els.delimiterSelect.value;
+  console.log(`[CSV Match Cards] Parsing preview for file: ${state.file.name}, delimiter: "${delimiter}", encoding: ${els.encodingSelect.value}`);
 
   Papa.parse(state.file, {
     delimiter,
@@ -103,10 +106,12 @@ function parsePreview() {
     preview: 5, // first 5 rows for preview
     complete: (res) => {
       const rows = res.data || [];
+      console.log(`[CSV Match Cards] Preview parsed successfully (${rows.length} preview rows).`);
       renderPreview(rows);
       els.btnApplyImport.disabled = rows.length === 0;
     },
     error: (err) => {
+      console.error('[CSV Match Cards] Preview PapaParse error:', err);
       els.importError.textContent = err?.message || String(err);
       els.btnApplyImport.disabled = true;
     }
@@ -119,22 +124,28 @@ function parseFullAndApply() {
   state.delimiter = els.delimiterSelect.value === '\\t' ? '\t' : els.delimiterSelect.value;
   state.firstRowHeader = els.hasHeader.checked;
 
+  console.log(`[CSV Match Cards] Applying full CSV parse for: ${state.file.name}`);
+
   Papa.parse(state.file, {
     delimiter: state.delimiter,
     encoding: els.encodingSelect.value,
     skipEmptyLines: true,
     complete: (res) => {
       const rows = (res.data || []).filter(r => Array.isArray(r));
+      console.log(`[CSV Match Cards] Full CSV parse complete: ${rows.length} total rows.`);
       applyParsedRows(rows);
+      startRound();
       closeImport();
     },
     error: (err) => {
+      console.error('[CSV Match Cards] Full CSV PapaParse error:', err);
       els.importError.textContent = err?.message || String(err);
     }
   });
 }
 
 function applyParsedRows(rows) {
+  console.log(`[CSV Match Cards] applyParsedRows: total raw rows = ${rows.length}`);
   state.rawRows = rows;
   state.maxCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
 
@@ -145,6 +156,8 @@ function applyParsedRows(rows) {
     state.headerRow = null;
     state.dataRows = rows;
   }
+
+  console.log(`[CSV Match Cards] Parsed headers:`, state.headerRow, `Total data rows: ${state.dataRows.length}, maxCols: ${state.maxCols}`);
 
   // Default select first 2 columns if possible
   state.selectedCols = [];
@@ -164,6 +177,7 @@ function enableSetupButtons() {
   els.btnPrev.disabled = !ok;
   els.btnNext.disabled = !ok;
   els.btnShuffle.disabled = true;
+  console.log(`[CSV Match Cards] Setup buttons state: enabled = ${ok}`);
 }
 
 function renderPreview(rows) {
@@ -202,7 +216,8 @@ function renderColumnsSelector() {
     cb.id = id;
     cb.checked = state.selectedCols.includes(col);
 
-    cb.addEventListener('change', () => {
+    cb.addEventListener('change', (e) => {
+      if (e) e.preventDefault();
       const next = new Set(state.selectedCols);
       if (cb.checked) next.add(col);
       else next.delete(col);
@@ -220,7 +235,12 @@ function renderColumnsSelector() {
       }
 
       state.selectedCols = arr;
-      // No auto-restart; user can press Start
+      console.log('[CSV Match Cards] Column selection updated:', state.selectedCols);
+      if (state.dataRows.length > 0) {
+        startRound();
+      } else {
+        updateRoundInfo();
+      }
     });
 
     const label = document.createElement('label');
@@ -261,7 +281,12 @@ function startRound() {
   const rows = state.dataRows.slice(start, start + state.k);
   const n = state.selectedCols.length;
 
-  if (rows.length === 0 || n < 2) return;
+  console.log(`[CSV Match Cards] startRound called: roundIndex=${state.roundIndex}, K=${state.k}, rowsCount=${rows.length}, selectedColsCount=${n}`);
+
+  if (rows.length === 0 || n < 2) {
+    console.warn('[CSV Match Cards] startRound aborted: no rows or less than 2 columns selected.');
+    return;
+  }
 
   // Build groups (one group per row, but user can match any row into any group)
   state.groups = Array.from({ length: rows.length }, (_, i) => ({
@@ -272,7 +297,6 @@ function startRound() {
   }));
 
   // Create cards
-  // rowId is absolute index in dataRows (not local index), so hint can work across navigation if needed.
   const cardsArr = [];
   for (let local = 0; local < rows.length; local++) {
     const absoluteRowId = start + local;
@@ -302,6 +326,7 @@ function startRound() {
   renderGroups();
 
   els.btnShuffle.disabled = false;
+  console.log(`[CSV Match Cards] Round ${state.roundIndex + 1} started. Rendered ${cardsArr.length} cards and ${state.groups.length} groups.`);
 }
 
 function applyDuplicateMarkers(cardsArr) {
@@ -385,7 +410,7 @@ function renderCard(card) {
   el.innerHTML = `
     <div class="cardMeta">
       ${badge}
-      <button class="hintBtn" title="Highlight siblings">?</button>
+      <button class="hintBtn" type="button" title="Highlight siblings">?</button>
     </div>
     <div class="cardText">${escapeHtml(card.text || '(empty)')}</div>
   `;
@@ -399,6 +424,7 @@ function renderCard(card) {
 
   hintBtn.addEventListener('click', (ev) => {
     ev.stopPropagation();
+    ev.preventDefault();
     highlightRow(card.rowId);
   });
 
@@ -594,6 +620,7 @@ function recomputeAllGroupsUI() {
       els.groups.appendChild(groupEl);        // move DOM node to bottom
       g.movedToBottom = true;
       flashSuccess();
+      console.log(`[CSV Match Cards] Group ${g.groupId} solved successfully!`);
 
       window.setTimeout(() => groupEl.classList.remove('justSolved'), 400);
     }
@@ -629,6 +656,7 @@ function highlightRow(rowId) {
 }
 
 function shuffleUnsolved() {
+  console.log('[CSV Match Cards] Shuffling unsolved cards');
   // Pull all non-solved cards to pool, clear non-solved groups
   for (const g of state.groups) {
     if (g.state === 'good') continue;
@@ -656,10 +684,12 @@ function shuffleUnsolved() {
 }
 
 function goPrev() {
+  console.log('[CSV Match Cards] Navigating to previous round');
   state.roundIndex = Math.max(0, state.roundIndex - 1);
   startRound();
 }
 function goNext() {
+  console.log('[CSV Match Cards] Navigating to next round');
   const maxRound = Math.floor((state.dataRows.length - 1) / state.k);
   state.roundIndex = Math.min(maxRound, state.roundIndex + 1);
   startRound();
@@ -678,55 +708,6 @@ function setImportedFile(file) {
   state.file = file;
   els.btnApplyImport.disabled = !state.file;
   parsePreview();
-}
-
-// Wire UI
-els.btnOpenImport.addEventListener('click', openImport);
-els.btnCloseImport.addEventListener('click', closeImport);
-
-els.fileInput.addEventListener('change', () => {
-  state.file = els.fileInput.files?.[0] || null;
-  els.btnApplyImport.disabled = !state.file;
-  parsePreview();
-});
-els.delimiterSelect.addEventListener('change', parsePreview);
-els.hasHeader.addEventListener('change', parsePreview);
-els.encodingSelect.addEventListener('change', parsePreview);
-
-els.btnApplyImport.addEventListener('click', parseFullAndApply);
-
-els.rowsPerRound.addEventListener('input', updateRoundInfo);
-els.btnStart.addEventListener('click', startRound);
-els.btnPrev.addEventListener('click', goPrev);
-els.btnNext.addEventListener('click', goNext);
-els.btnShuffle.addEventListener('click', shuffleUnsolved);
-
-// Dropzone: click -> open picker
-els.dropzone.addEventListener('click', () => els.fileInput.click());
-
-// Prevent default browser behavior for drag/drop and handle file drop
-['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evtName => {
-  els.dropzone.addEventListener(evtName, (ev) => {
-    ev.preventDefault();
-    ev.stopPropagation();
-  });
-});
-
-['dragenter', 'dragover'].forEach(evtName => {
-  els.dropzone.addEventListener(evtName, () => els.dropzone.classList.add('over'));
-});
-
-['dragleave', 'drop'].forEach(evtName => {
-  els.dropzone.addEventListener(evtName, () => els.dropzone.classList.remove('over'));
-});
-
-els.dropzone.addEventListener('drop', (ev) => {
-  const file = ev.dataTransfer?.files?.[0];
-  if (file) setImportedFile(file);
-});
-
-if (window.matchMedia('(max-width: 900px)').matches) {
-  els.rowsPerRound.value = '5';
 }
 
 /* --- Web Crypto API Encryption (PBKDF2 + AES-GCM) --- */
@@ -786,26 +767,31 @@ async function decryptApiKey(encryptedJson, passphrase) {
 
 /* --- AI Card Generator Logic --- */
 function openAiDialog() {
+  console.log('[CSV Match Cards] Opening AI Card Generator dialog');
   els.aiError.textContent = '';
-  els.aiStatus.textContent = 'Model: mistral-medium-2508';
+  els.aiStatus.textContent = 'Model: mistral-small-latest';
 
   const plainKey = localStorage.getItem('mistral_api_key');
   const encKey = localStorage.getItem('mistral_encrypted_key');
 
   if (plainKey) {
     els.aiApiKey.value = plainKey;
+    console.log('[CSV Match Cards] Found plain API key in localStorage.');
   } else if (encKey) {
     els.aiStatus.textContent = 'Encrypted key found. Enter PIN/Passphrase to unlock or enter key.';
+    console.log('[CSV Match Cards] Found encrypted API key in localStorage.');
   }
 
   els.aiDialog.open = true;
 }
 
 function closeAiDialog() {
+  console.log('[CSV Match Cards] Closing AI Card Generator dialog');
   els.aiDialog.open = false;
 }
 
 function handlePresetClick(e) {
+  if (e) e.preventDefault();
   const chip = e.target.closest('.presetChip');
   if (!chip) return;
   const theme = chip.dataset.theme;
@@ -815,9 +801,11 @@ function handlePresetClick(e) {
   if (theme) els.aiTheme.value = theme;
   if (cols) els.aiColsCount.value = cols;
   if (customCols) els.aiCustomCols.value = customCols;
+  console.log('[CSV Match Cards] Selected preset:', { theme, cols, customCols });
 }
 
-async function generateCardsWithMistral() {
+async function generateCardsWithMistral(e) {
+  if (e) e.preventDefault();
   els.aiError.textContent = '';
   els.aiStatus.textContent = 'Preparing request...';
 
@@ -827,9 +815,12 @@ async function generateCardsWithMistral() {
   const encKey = localStorage.getItem('mistral_encrypted_key');
   if (!apiKey && encKey && passphrase) {
     try {
+      console.log('[CSV Match Cards] Decrypting API key with passphrase...');
       apiKey = await decryptApiKey(encKey, passphrase);
       els.aiApiKey.value = apiKey;
+      console.log('[CSV Match Cards] API key decrypted successfully.');
     } catch (err) {
+      console.error('[CSV Match Cards] Decryption failed:', err);
       els.aiError.textContent = 'Failed to decrypt API key with provided PIN/Passphrase.';
       els.aiStatus.textContent = '';
       return;
@@ -837,6 +828,7 @@ async function generateCardsWithMistral() {
   }
 
   if (!apiKey) {
+    console.warn('[CSV Match Cards] AI Generation aborted: No API key provided.');
     els.aiError.textContent = 'Mistral API key is required.';
     els.aiStatus.textContent = '';
     return;
@@ -848,6 +840,8 @@ async function generateCardsWithMistral() {
   const customColsRaw = els.aiCustomCols.value.trim();
   const customCols = customColsRaw ? customColsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
 
+  console.log('[CSV Match Cards] Starting Mistral AI card generation:', { theme, colCount, rowCount, customCols });
+
   // Key storage preference
   if (els.aiSaveKey.checked) {
     if (passphrase) {
@@ -855,20 +849,23 @@ async function generateCardsWithMistral() {
         const encrypted = await encryptApiKey(apiKey, passphrase);
         localStorage.setItem('mistral_encrypted_key', encrypted);
         localStorage.removeItem('mistral_api_key');
+        console.log('[CSV Match Cards] Encrypted API key saved to localStorage.');
       } catch (err) {
-        console.error('Encryption failed:', err);
+        console.error('[CSV Match Cards] Encryption failed:', err);
       }
     } else {
       localStorage.setItem('mistral_api_key', apiKey);
       localStorage.removeItem('mistral_encrypted_key');
+      console.log('[CSV Match Cards] Plain API key saved to localStorage.');
     }
   } else {
     localStorage.removeItem('mistral_api_key');
     localStorage.removeItem('mistral_encrypted_key');
+    console.log('[CSV Match Cards] API keys removed from localStorage.');
   }
 
   els.btnGenerateAi.disabled = true;
-  els.aiStatus.textContent = 'Generating cards via Mistral API (mistral-medium-2508)...';
+  els.aiStatus.textContent = 'Generating cards via Mistral API...';
 
   let colInstruction = `Generate ${colCount} descriptive header names in the "headers" array.`;
   if (customCols.length > 0) {
@@ -886,7 +883,10 @@ Ensure that elements across a row strictly match each other for the topic, and e
 
   const userPrompt = `Topic: "${theme}". Generate ${rowCount} distinct rows, each containing ${colCount} matching values.`;
 
+  const modelName = 'mistral-small-latest';
+
   try {
+    console.log(`[CSV Match Cards] Sending POST to Mistral API (model: ${modelName})...`);
     const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -894,7 +894,7 @@ Ensure that elements across a row strictly match each other for the topic, and e
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'mistral-medium-2508',
+        model: modelName,
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: systemPrompt },
@@ -903,16 +903,22 @@ Ensure that elements across a row strictly match each other for the topic, and e
       })
     });
 
+    console.log('[CSV Match Cards] Mistral API HTTP response status:', response.status);
+
     if (!response.ok) {
       const errJson = await response.json().catch(() => ({}));
-      const msg = errJson.message || errJson.error?.message || `HTTP ${response.status} ${response.statusText}`;
+      console.error('[CSV Match Cards] Mistral API Error Payload:', errJson);
+      const msg = errJson.message || errJson.error?.message || errJson.detail || `HTTP ${response.status} ${response.statusText}`;
       throw new Error(msg);
     }
 
     const resData = await response.json();
+    console.log('[CSV Match Cards] Received payload from Mistral API:', resData);
+
     const rawContent = resData.choices?.[0]?.message?.content;
     if (!rawContent) throw new Error('Received empty response content from Mistral');
 
+    console.log('[CSV Match Cards] Raw content from AI:', rawContent);
     const parsed = JSON.parse(rawContent);
     if (!parsed.data || !Array.isArray(parsed.data) || parsed.data.length === 0) {
       throw new Error('Invalid JSON format: missing or empty "data" array');
@@ -923,6 +929,8 @@ Ensure that elements across a row strictly match each other for the topic, and e
       : Array.from({ length: colCount }, (_, i) => `Col ${i + 1}`);
 
     const dataRows = parsed.data.map(r => r.map(c => String(c ?? '')));
+
+    console.log(`[CSV Match Cards] Parsed ${dataRows.length} data rows and ${headers.length} headers.`);
 
     // Apply to game state
     state.firstRowHeader = true;
@@ -935,14 +943,18 @@ Ensure that elements across a row strictly match each other for the topic, and e
     enableSetupButtons();
     updateRoundInfo();
 
-    els.aiStatus.textContent = `Generated ${dataRows.length} rows! Review in setup panel to start.`;
+    // AUTO START ROUND!
+    console.log('[CSV Match Cards] Auto-starting round 1 with generated cards...');
+    startRound();
+
+    els.aiStatus.textContent = `Generated ${dataRows.length} rows! Starting round...`;
     setTimeout(() => {
       closeAiDialog();
-      els.aiStatus.textContent = 'Model: mistral-medium-2508';
-    }, 1000);
+      els.aiStatus.textContent = 'Model: mistral-small-latest';
+    }, 800);
 
   } catch (err) {
-    console.error('AI Card Generation Error:', err);
+    console.error('[CSV Match Cards] AI Card Generation Error:', err);
     els.aiError.textContent = `Error: ${err.message}`;
     els.aiStatus.textContent = '';
   } finally {
@@ -950,9 +962,61 @@ Ensure that elements across a row strictly match each other for the topic, and e
   }
 }
 
+// Wire UI
+els.btnOpenImport.addEventListener('click', (e) => { e.preventDefault(); openImport(); });
+els.btnCloseImport.addEventListener('click', (e) => { e.preventDefault(); closeImport(); });
+
+els.fileInput.addEventListener('change', () => {
+  state.file = els.fileInput.files?.[0] || null;
+  els.btnApplyImport.disabled = !state.file;
+  parsePreview();
+});
+els.delimiterSelect.addEventListener('change', parsePreview);
+els.hasHeader.addEventListener('change', parsePreview);
+els.encodingSelect.addEventListener('change', parsePreview);
+
+els.btnApplyImport.addEventListener('click', (e) => { e.preventDefault(); parseFullAndApply(); });
+
+els.rowsPerRound.addEventListener('input', () => {
+  updateRoundInfo();
+  if (state.dataRows.length > 0) startRound();
+});
+els.btnStart.addEventListener('click', (e) => { e.preventDefault(); startRound(); });
+els.btnPrev.addEventListener('click', (e) => { e.preventDefault(); goPrev(); });
+els.btnNext.addEventListener('click', (e) => { e.preventDefault(); goNext(); });
+els.btnShuffle.addEventListener('click', (e) => { e.preventDefault(); shuffleUnsolved(); });
+
+// Dropzone: click -> open picker
+els.dropzone.addEventListener('click', (e) => { e.preventDefault(); els.fileInput.click(); });
+
+// Prevent default browser behavior for drag/drop and handle file drop
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evtName => {
+  els.dropzone.addEventListener(evtName, (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+  });
+});
+
+['dragenter', 'dragover'].forEach(evtName => {
+  els.dropzone.addEventListener(evtName, () => els.dropzone.classList.add('over'));
+});
+
+['dragleave', 'drop'].forEach(evtName => {
+  els.dropzone.addEventListener(evtName, () => els.dropzone.classList.remove('over'));
+});
+
+els.dropzone.addEventListener('drop', (ev) => {
+  const file = ev.dataTransfer?.files?.[0];
+  if (file) setImportedFile(file);
+});
+
+if (window.matchMedia('(max-width: 900px)').matches) {
+  els.rowsPerRound.value = '5';
+}
+
 // Wire AI Generator UI
-if (els.btnOpenAi) els.btnOpenAi.addEventListener('click', openAiDialog);
-if (els.btnCloseAi) els.btnCloseAi.addEventListener('click', closeAiDialog);
+if (els.btnOpenAi) els.btnOpenAi.addEventListener('click', (e) => { e.preventDefault(); openAiDialog(); });
+if (els.btnCloseAi) els.btnCloseAi.addEventListener('click', (e) => { e.preventDefault(); closeAiDialog(); });
 if (els.btnGenerateAi) els.btnGenerateAi.addEventListener('click', generateCardsWithMistral);
 if (els.presetChips) els.presetChips.addEventListener('click', handlePresetClick);
 

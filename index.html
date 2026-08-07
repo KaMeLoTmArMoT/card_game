@@ -33,8 +33,8 @@
   <header class="topbar">
     <div class="brand md-typescale-title-large">CSV Match Cards</div>
     <div class="actions">
-      <md-filled-button id="btnOpenImport">Import CSV</md-filled-button>
-      <md-outlined-button id="btnOpenAi">✨ AI Generate</md-outlined-button>
+      <md-filled-button id="btnOpenImport" type="button">Import CSV</md-filled-button>
+      <md-outlined-button id="btnOpenAi" type="button">✨ AI Generate</md-outlined-button>
     </div>
   </header>
 
@@ -48,13 +48,13 @@
         <md-outlined-text-field id="rowsPerRound" type="number" label="Rows per round (K)" value="10"></md-outlined-text-field>
 
         <div class="row">
-          <md-filled-button id="btnStart" disabled>Start / Restart round</md-filled-button>
-          <md-outlined-button id="btnPrev" disabled>Prev</md-outlined-button>
-          <md-outlined-button id="btnNext" disabled>Next</md-outlined-button>
+          <md-filled-button id="btnStart" type="button" disabled>Start / Restart round</md-filled-button>
+          <md-outlined-button id="btnPrev" type="button" disabled>Prev</md-outlined-button>
+          <md-outlined-button id="btnNext" type="button" disabled>Next</md-outlined-button>
         </div>
 
         <div class="row">
-          <md-outlined-button id="btnShuffle" disabled>Shuffle unsolved</md-outlined-button>
+          <md-outlined-button id="btnShuffle" type="button" disabled>Shuffle unsolved</md-outlined-button>
         </div>
 
         <div class="hint md-typescale-body-small">
@@ -130,8 +130,8 @@
     </div>
 
     <div slot="actions">
-      <md-text-button id="btnCloseImport">Close</md-text-button>
-      <md-filled-button id="btnApplyImport" disabled>Apply</md-filled-button>
+      <md-text-button id="btnCloseImport" type="button">Close</md-text-button>
+      <md-filled-button id="btnApplyImport" type="button" disabled>Apply</md-filled-button>
     </div>
   </md-dialog>
 
@@ -169,13 +169,13 @@
         <md-outlined-text-field id="aiRowsCount" type="number" label="Rows to generate (5-30)" value="15" min="5" max="30"></md-outlined-text-field>
       </div>
 
-      <div id="aiStatus" class="statusMessage muted">Model: mistral-medium-2508</div>
+      <div id="aiStatus" class="statusMessage muted">Model: mistral-small-latest</div>
       <div id="aiError" class="error"></div>
     </div>
 
     <div slot="actions">
-      <md-text-button id="btnCloseAi">Close</md-text-button>
-      <md-filled-button id="btnGenerateAi">Generate Cards</md-filled-button>
+      <md-text-button id="btnCloseAi" type="button">Close</md-text-button>
+      <md-filled-button id="btnGenerateAi" type="button">Generate Cards</md-filled-button>
     </div>
   </md-dialog>
 </body>
