@@ -1,22 +1,23 @@
 import { decryptApiKey, encryptApiKey } from "./crypto";
 import { closeEditor, openEditor } from "./editor";
 import { els } from "./els";
+import { loadApiKey, saveApiKey } from "./keyStore";
 import type { MistralResponse } from "./types";
 
 const MODEL_NAME = "mistral-medium-2508";
 
-export function openAiDialog(): void {
+export async function openAiDialog(): Promise<void> {
 	els.aiError.textContent = "";
 	els.aiStatus.textContent = `Model: ${MODEL_NAME}`;
 	els.aiStatus.classList.remove("keyNeeded");
 	els.aiPassphrase.classList.remove("keyNeeded");
 
-	const plainKey = localStorage.getItem("mistral_api_key");
-	const encKey = localStorage.getItem("mistral_encrypted_key");
+	const { plain, encrypted } = await loadApiKey();
 
-	if (plainKey) {
-		els.aiApiKey.value = plainKey;
-	} else if (encKey) {
+	if (plain) {
+		els.aiApiKey.value = plain;
+		els.aiStatus.textContent = `${MODEL_NAME} · key loaded`;
+	} else if (encrypted) {
 		els.aiStatus.textContent =
 			"Encrypted key saved. Enter PIN/Passphrase to unlock.";
 		els.aiStatus.classList.add("keyNeeded");
@@ -55,7 +56,7 @@ export async function generateCardsWithMistral(e?: Event): Promise<void> {
 	let apiKey = els.aiApiKey.value.trim();
 	const passphrase = els.aiPassphrase.value.trim();
 
-	const encKey = localStorage.getItem("mistral_encrypted_key");
+	const { encrypted: encKey } = await loadApiKey();
 	if (!apiKey && encKey && passphrase) {
 		try {
 			apiKey = await decryptApiKey(encKey, passphrase);
@@ -95,18 +96,15 @@ export async function generateCardsWithMistral(e?: Event): Promise<void> {
 		if (passphrase) {
 			try {
 				const encrypted = await encryptApiKey(apiKey, passphrase);
-				localStorage.setItem("mistral_encrypted_key", encrypted);
-				localStorage.removeItem("mistral_api_key");
+				await saveApiKey({ plain: null, encrypted });
 			} catch {
 				// encryption failure -> leave stored keys untouched
 			}
 		} else {
-			localStorage.setItem("mistral_api_key", apiKey);
-			localStorage.removeItem("mistral_encrypted_key");
+			await saveApiKey({ plain: apiKey, encrypted: null });
 		}
 	} else {
-		localStorage.removeItem("mistral_api_key");
-		localStorage.removeItem("mistral_encrypted_key");
+		await saveApiKey({ plain: null, encrypted: null });
 	}
 
 	els.btnGenerateAi.disabled = true;
@@ -187,7 +185,6 @@ Ensure that elements across a row strictly match each other for the topic, and e
 
 		els.aiStatus.textContent = `Generated ${dataRows.length} rows — review and edit them below.`;
 
-		closeAiDialog();
 		openEditor(headers, dataRows, {
 			regenerable: true,
 			onRegenerate: () => {
@@ -195,6 +192,7 @@ Ensure that elements across a row strictly match each other for the topic, and e
 				openAiDialog();
 			},
 		});
+		closeAiDialog();
 	} catch (err) {
 		els.aiError.textContent = `Error: ${errorMessage(err)}`;
 		els.aiStatus.textContent = "";

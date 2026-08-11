@@ -40,6 +40,24 @@ if (navigator.storage?.persist) {
 	navigator.storage.persist().catch(() => {});
 }
 
+interface MdDialogLike extends HTMLElement {
+	nextClickIsFromContent?: boolean;
+}
+
+document.querySelectorAll("md-dialog").forEach((dialog) => {
+	const md = dialog as unknown as MdDialogLike;
+	md.addEventListener(
+		"pointerdown",
+		(e) => {
+			const container = md.shadowRoot?.querySelector(".container");
+			md.nextClickIsFromContent = Boolean(
+				container && e.composedPath().includes(container),
+			);
+		},
+		true,
+	);
+});
+
 els.btnOpenImport.addEventListener("click", (e) => {
 	e.preventDefault();
 	openImport();

@@ -23,7 +23,7 @@ CSV Match Cards turns CSV rows into draggable cards. The goal is to build correc
 ## Features
 
 - **CSV import** with 5-row preview, configurable delimiter, header row and encoding (UTF-8 / Windows-1252 / ISO-8859-1).
-- **AI Card Generator** (bring-your-own Mistral key, model `mistral-medium-2508`): pick a preset or theme, choose column/row counts, and generate a dataset. The key is remembered locally (plain or encrypted with a PIN/passphrase); `navigator.storage.persist()` requests durable storage so it isn't evicted, and the dialog highlights the passphrase field when an encrypted key needs unlocking.
+- **AI Card Generator** (bring-your-own Mistral key, model `mistral-medium-2508`): pick a preset or theme, choose column/row counts, and generate a dataset. The key is remembered locally (plain or encrypted with a PIN/passphrase) in both `localStorage` and IndexedDB, with `navigator.storage.persist()` requesting durable storage; the dialog highlights the passphrase field when an encrypted key needs unlocking.
 - **Editable pre-selection table**: after AI generation *or* CSV import, an Excel-like grid lets you edit any word, and add/delete rows and columns before starting the game.
 - **Rounds**: choose rows per round (K) and columns (2–6), with prev/next/shuffle.
 - **Drag & drop** on desktop and touch devices; `?` hint highlights sibling cards from the same row; solved groups lock and move to the bottom with a success flash.
@@ -106,7 +106,8 @@ src/
    editor.ts           # Editable pre-selection table dialog
    game.ts             # Board rendering, drag & drop, rounds, groups
    mistral.ts          # Mistral API client + prompt builder
-  crypto.ts           # Web Crypto (PBKDF2 + AES-GCM) key helpers
+   crypto.ts           # Web Crypto (PBKDF2 + AES-GCM) key helpers
+   keyStore.ts         # Durable key persistence (localStorage + IndexedDB)
   els.ts              # Typed DOM element references
   styles.css          # App styles
 .github/workflows/    # GitHub Pages deployment

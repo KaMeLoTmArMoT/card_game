@@ -21,7 +21,7 @@ No test runner configured — validate changes manually via `npm run dev` and vi
 
 ## Structure
 - **Standalone Vite single-page app** — entry point: `index.html` + `src/main.ts`.
-- Source modules under `src/`: `types.ts`, `state.ts`, `csv.ts`, `editor.ts`, `crypto.ts`, `mistral.ts`, `game.ts`.
+- Source modules under `src/`: `types.ts`, `state.ts`, `csv.ts`, `editor.ts`, `keyStore.ts`, `crypto.ts`, `mistral.ts`, `game.ts`.
 - Material Web and PapaParse are npm dependencies bundled by Vite (no CDN).
 
 ## Architecture
