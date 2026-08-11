@@ -23,7 +23,8 @@ CSV Match Cards turns CSV rows into draggable cards. The goal is to build correc
 ## Features
 
 - **CSV import** with 5-row preview, configurable delimiter, header row and encoding (UTF-8 / Windows-1252 / ISO-8859-1).
-- **AI Card Generator** (bring-your-own Mistral key, model `mistral-medium-2508`): pick a preset or theme, choose column/row counts, and generate a dataset directly into the round setup. Optional PIN/passphrase encryption of the stored API key.
+- **AI Card Generator** (bring-your-own Mistral key, model `mistral-medium-2508`): pick a preset or theme, choose column/row counts, and generate a dataset. The key is remembered locally (plain or encrypted with a PIN/passphrase); `navigator.storage.persist()` requests durable storage so it isn't evicted, and the dialog highlights the passphrase field when an encrypted key needs unlocking.
+- **Editable pre-selection table**: after AI generation *or* CSV import, an Excel-like grid lets you edit any word, and add/delete rows and columns before starting the game.
 - **Rounds**: choose rows per round (K) and columns (2–6), with prev/next/shuffle.
 - **Drag & drop** on desktop and touch devices; `?` hint highlights sibling cards from the same row; solved groups lock and move to the bottom with a success flash.
 - **Mobile-friendly** responsive layout.
@@ -69,7 +70,8 @@ npm run format    # auto-format
 1. Click **✨ AI Generate**.
 2. Enter your Mistral API key (optionally a PIN/passphrase to encrypt it in `localStorage`).
 3. Pick a preset or type a theme, adjust columns (2–6) and rows (5–30).
-4. **Generate Cards** — the dataset loads into the round setup, ready to play.
+4. **Generate Cards** — the dataset opens in the editable review table.
+5. Edit/add/remove rows or columns as needed, then **Start game**. Use **Regenerate** to tweak the prompt and try again.
 
 ### CSV Format
 
@@ -99,10 +101,11 @@ index.html            # App shell (Material Web components)
 src/
   main.ts             # Entry point: element refs, event wiring
   types.ts            # Card, Group, GameState, Mistral types
-  state.ts            # Reactive game state + helpers
-  csv.ts              # PapaParse import/preview/apply
-  game.ts             # Board rendering, drag & drop, rounds, groups
-  mistral.ts          # Mistral API client + prompt builder
+   state.ts            # Reactive game state + helpers
+   csv.ts              # PapaParse import/preview/apply
+   editor.ts           # Editable pre-selection table dialog
+   game.ts             # Board rendering, drag & drop, rounds, groups
+   mistral.ts          # Mistral API client + prompt builder
   crypto.ts           # Web Crypto (PBKDF2 + AES-GCM) key helpers
   els.ts              # Typed DOM element references
   styles.css          # App styles

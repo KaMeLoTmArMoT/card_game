@@ -52,4 +52,14 @@ export const els = {
 	aiStatus: el<HTMLElement>("#aiStatus"),
 	aiError: el<HTMLElement>("#aiError"),
 	presetChips: el<HTMLElement>("#presetChips"),
+
+	editorDialog: el<DialogElement>("#editorDialog"),
+	btnBackEditor: el<ButtonElement>("#btnBackEditor"),
+	btnRegenerateEditor: el<ButtonElement>("#btnRegenerateEditor"),
+	btnStartEditor: el<ButtonElement>("#btnStartEditor"),
+	btnAddRow: el<ButtonElement>("#btnAddRow"),
+	btnAddCol: el<ButtonElement>("#btnAddCol"),
+	editorTable: el<HTMLElement>("#editorTable"),
+	editorInfo: el<HTMLElement>("#editorInfo"),
+	editorError: el<HTMLElement>("#editorError"),
 };

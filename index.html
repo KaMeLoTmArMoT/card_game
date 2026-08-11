@@ -160,5 +160,28 @@
       <md-filled-button id="btnGenerateAi" type="button">Generate Cards</md-filled-button>
     </div>
   </md-dialog>
+
+  <!-- Pre-selection editor dialog -->
+  <md-dialog id="editorDialog">
+    <div slot="headline">Review &amp; edit cards</div>
+
+    <div slot="content" class="dialogContent">
+      <div class="editorToolbar">
+        <md-outlined-button id="btnAddRow" type="button">+ Add row</md-outlined-button>
+        <md-outlined-button id="btnAddCol" type="button">+ Add column</md-outlined-button>
+        <span id="editorInfo" class="muted"></span>
+      </div>
+
+      <div id="editorTable" class="editorTable"></div>
+
+      <div id="editorError" class="error"></div>
+    </div>
+
+    <div slot="actions">
+      <md-text-button id="btnBackEditor" type="button">Back</md-text-button>
+      <md-text-button id="btnRegenerateEditor" type="button" hidden>Regenerate</md-text-button>
+      <md-filled-button id="btnStartEditor" type="button" disabled>Start game</md-filled-button>
+    </div>
+  </md-dialog>
 </body>
 </html>

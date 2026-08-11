@@ -1,8 +1,6 @@
 import { decryptApiKey, encryptApiKey } from "./crypto";
-import { applyParsedRows, enableSetupButtons } from "./csv";
+import { closeEditor, openEditor } from "./editor";
 import { els } from "./els";
-import { renderColumnsSelector, startRound, updateRoundInfo } from "./game";
-import { state } from "./state";
 import type { MistralResponse } from "./types";
 
 const MODEL_NAME = "mistral-medium-2508";
@@ -10,6 +8,8 @@ const MODEL_NAME = "mistral-medium-2508";
 export function openAiDialog(): void {
 	els.aiError.textContent = "";
 	els.aiStatus.textContent = `Model: ${MODEL_NAME}`;
+	els.aiStatus.classList.remove("keyNeeded");
+	els.aiPassphrase.classList.remove("keyNeeded");
 
 	const plainKey = localStorage.getItem("mistral_api_key");
 	const encKey = localStorage.getItem("mistral_encrypted_key");
@@ -18,7 +18,9 @@ export function openAiDialog(): void {
 		els.aiApiKey.value = plainKey;
 	} else if (encKey) {
 		els.aiStatus.textContent =
-			"Encrypted key found. Enter PIN/Passphrase to unlock or enter key.";
+			"Encrypted key saved. Enter PIN/Passphrase to unlock.";
+		els.aiStatus.classList.add("keyNeeded");
+		els.aiPassphrase.classList.add("keyNeeded");
 	}
 
 	els.aiDialog.open = true;
@@ -183,25 +185,16 @@ Ensure that elements across a row strictly match each other for the topic, and e
 			(Array.isArray(r) ? r : []).map((c) => String(c ?? "")),
 		);
 
-		state.firstRowHeader = true;
-		const fullRows = [headers, ...dataRows];
-		applyParsedRows(fullRows);
+		els.aiStatus.textContent = `Generated ${dataRows.length} rows — review and edit them below.`;
 
-		state.selectedCols = Array.from(
-			{ length: Math.min(headers.length, 6) },
-			(_, i) => i,
-		);
-		renderColumnsSelector();
-		enableSetupButtons();
-		updateRoundInfo();
-
-		startRound();
-
-		els.aiStatus.textContent = `Generated ${dataRows.length} rows! Starting round...`;
-		window.setTimeout(() => {
-			closeAiDialog();
-			els.aiStatus.textContent = `Model: ${MODEL_NAME}`;
-		}, 800);
+		closeAiDialog();
+		openEditor(headers, dataRows, {
+			regenerable: true,
+			onRegenerate: () => {
+				closeEditor();
+				openAiDialog();
+			},
+		});
 	} catch (err) {
 		els.aiError.textContent = `Error: ${errorMessage(err)}`;
 		els.aiStatus.textContent = "";

@@ -10,6 +10,12 @@ import {
 	parsePreview,
 	setImportedFile,
 } from "./csv";
+import {
+	addEditorColumn,
+	addEditorRow,
+	backFromEditor,
+	commitEditor,
+} from "./editor";
 import { els } from "./els";
 import {
 	goNext,
@@ -28,6 +34,10 @@ import { state } from "./state";
 
 if (typescaleStyles.styleSheet) {
 	document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+}
+
+if (navigator.storage?.persist) {
+	navigator.storage.persist().catch(() => {});
 }
 
 els.btnOpenImport.addEventListener("click", (e) => {
@@ -117,5 +127,26 @@ els.btnCloseAi.addEventListener("click", (e) => {
 });
 els.btnGenerateAi.addEventListener("click", generateCardsWithMistral);
 els.presetChips.addEventListener("click", handlePresetClick);
+
+els.btnAddRow.addEventListener("click", (e) => {
+	e.preventDefault();
+	addEditorRow();
+});
+els.btnAddCol.addEventListener("click", (e) => {
+	e.preventDefault();
+	addEditorColumn();
+});
+els.btnStartEditor.addEventListener("click", (e) => {
+	e.preventDefault();
+	commitEditor();
+});
+els.btnBackEditor.addEventListener("click", (e) => {
+	e.preventDefault();
+	backFromEditor();
+});
+els.btnRegenerateEditor.addEventListener("click", (e) => {
+	e.preventDefault();
+	backFromEditor();
+});
 
 updateRoundInfo();

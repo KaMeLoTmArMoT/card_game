@@ -520,3 +520,106 @@ body.successFlash::before {
 .statusMessage {
 	font-size: 12px;
 }
+
+.statusMessage.keyNeeded {
+	color: var(--accent);
+	font-weight: 500;
+}
+
+md-outlined-text-field#aiPassphrase.keyNeeded {
+	--md-outlined-text-field-outline-color: var(--accent);
+	--md-outlined-text-field-outline-width: 2px;
+	--md-outlined-text-field-label-text-color: var(--accent);
+}
+
+/* --- Pre-selection editor --- */
+md-dialog#editorDialog {
+	width: min(96vw, 900px);
+}
+
+.editorToolbar {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.editorTable {
+	overflow: auto;
+	max-height: 55vh;
+	max-height: 55dvh;
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	background: rgba(0, 0, 0, 0.2);
+	min-height: 120px;
+}
+
+.editTable {
+	width: 100%;
+	min-width: 480px;
+	border-collapse: collapse;
+}
+
+.editTable th,
+.editTable td {
+	padding: 4px 6px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.editTable th {
+	position: sticky;
+	top: 0;
+	background: #1a2236;
+	z-index: 1;
+}
+
+.editRowHead {
+	width: 44px;
+	text-align: center;
+	white-space: nowrap;
+	color: var(--muted);
+	font-size: 12px;
+}
+
+.editInput {
+	width: 100%;
+	min-width: 90px;
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid transparent;
+	border-radius: 8px;
+	color: var(--text);
+	padding: 6px 8px;
+	font-size: 13px;
+}
+
+.editInput:hover {
+	border-color: var(--border);
+}
+
+.editInput:focus {
+	outline: none;
+	border-color: var(--accent);
+	background: rgba(122, 162, 255, 0.08);
+}
+
+.editDelRow,
+.editDelCol {
+	background: transparent;
+	border: none;
+	color: var(--muted);
+	cursor: pointer;
+	font-size: 12px;
+	padding: 2px 6px;
+	border-radius: 6px;
+	line-height: 1;
+}
+
+.editDelRow:hover,
+.editDelCol:hover {
+	color: var(--bad);
+	background: rgba(255, 77, 77, 0.12);
+}
+
+.editDelCol {
+	margin-left: 6px;
+}

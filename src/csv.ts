@@ -1,11 +1,6 @@
 import Papa from "papaparse";
+import { openEditor } from "./editor";
 import { els } from "./els";
-import {
-	renderColumnsSelector,
-	resetBoardUI,
-	startRound,
-	updateRoundInfo,
-} from "./game";
 import { escapeHtml, state } from "./state";
 
 function toRows(data: unknown): string[][] {
@@ -65,8 +60,7 @@ export function parseFullAndApply(): void {
 		skipEmptyLines: true,
 		complete: (res) => {
 			const rows = toRows(res.data);
-			applyParsedRows(rows);
-			startRound();
+			openEditorForImport(rows);
 			closeImport();
 		},
 		error: (err) => {
@@ -75,28 +69,25 @@ export function parseFullAndApply(): void {
 	});
 }
 
-export function applyParsedRows(rows: string[][]): void {
-	state.rawRows = rows;
-	state.maxCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
+function openEditorForImport(rows: string[][]): void {
+	if (rows.length === 0) return;
 
-	if (state.firstRowHeader && rows.length > 0) {
-		state.headerRow = rows[0].map((x) => String(x ?? "").trim() || "(empty)");
-		state.dataRows = rows.slice(1);
+	let header: string[];
+	let data: string[][];
+
+	if (state.firstRowHeader) {
+		header = rows[0].map((x) => String(x ?? "").trim() || "(empty)");
+		data = rows.slice(1);
 	} else {
-		state.headerRow = null;
-		state.dataRows = rows;
+		const colCount = rows.reduce((m, r) => Math.max(m, r.length), 0);
+		header = Array.from(
+			{ length: Math.max(1, colCount) },
+			(_, i) => `Column ${i + 1}`,
+		);
+		data = rows;
 	}
 
-	state.selectedCols = [];
-	for (let i = 0; i < Math.min(2, state.maxCols); i++)
-		state.selectedCols.push(i);
-
-	state.roundIndex = 0;
-
-	renderColumnsSelector();
-	enableSetupButtons();
-	updateRoundInfo();
-	resetBoardUI();
+	openEditor(header, data);
 }
 
 export function enableSetupButtons(): void {

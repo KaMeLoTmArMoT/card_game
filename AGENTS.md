@@ -21,10 +21,11 @@ No test runner configured — validate changes manually via `npm run dev` and vi
 
 ## Structure
 - **Standalone Vite single-page app** — entry point: `index.html` + `src/main.ts`.
-- Source modules under `src/`: `types.ts`, `state.ts`, `csv.ts`, `crypto.ts`, `mistral.ts`, `game.ts`.
+- Source modules under `src/`: `types.ts`, `state.ts`, `csv.ts`, `editor.ts`, `crypto.ts`, `mistral.ts`, `game.ts`.
 - Material Web and PapaParse are npm dependencies bundled by Vite (no CDN).
 
 ## Architecture
 - **CSV import**: PapaParse-based preview + full parse into `state.rawRows/headerRow/dataRows`.
+- **Editable pre-selection**: after AI generation and CSV import, `src/editor.ts` opens an Excel-like table (edit cells, add/delete rows & cols); **Start game** commits into `state` and calls `startRound()`.
 - **Game board**: drag & drop pointer events; cards map to `{rowId, colIndex}`; groups are correct when all slots share one row in the selected column order.
 - **BYOK Mistral**: key stored in `localStorage` as `mistral_api_key` (plain) or `mistral_encrypted_key` (PBKDF2 + AES-GCM with user PIN/passphrase).
