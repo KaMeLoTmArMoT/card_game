@@ -44,6 +44,7 @@ export const els = {
 	btnGenerateAi: el<ButtonElement>("#btnGenerateAi"),
 	aiApiKey: el<TextFieldElement>("#aiApiKey"),
 	aiPassphrase: el<TextFieldElement>("#aiPassphrase"),
+	btnUnlockKey: el<ButtonElement>("#btnUnlockKey"),
 	aiSaveKey: el<CheckboxElement>("#aiSaveKey"),
 	aiTheme: el<TextFieldElement>("#aiTheme"),
 	aiCustomCols: el<TextFieldElement>("#aiCustomCols"),

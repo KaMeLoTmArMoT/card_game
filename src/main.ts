@@ -20,6 +20,7 @@ import { els } from "./els";
 import {
 	goNext,
 	goPrev,
+	hydrateGame,
 	shuffleUnsolved,
 	startRound,
 	updateRoundInfo,
@@ -29,7 +30,9 @@ import {
 	generateCardsWithMistral,
 	handlePresetClick,
 	openAiDialog,
+	unlockSavedKey,
 } from "./mistral";
+import { loadGame } from "./persist";
 import { state } from "./state";
 
 if (typescaleStyles.styleSheet) {
@@ -143,6 +146,10 @@ els.btnCloseAi.addEventListener("click", (e) => {
 	e.preventDefault();
 	closeAiDialog();
 });
+els.btnUnlockKey.addEventListener("click", (e) => {
+	e.preventDefault();
+	unlockSavedKey();
+});
 els.btnGenerateAi.addEventListener("click", generateCardsWithMistral);
 els.presetChips.addEventListener("click", handlePresetClick);
 
@@ -167,4 +174,9 @@ els.btnRegenerateEditor.addEventListener("click", (e) => {
 	backFromEditor();
 });
 
-updateRoundInfo();
+const saved = loadGame();
+if (saved) {
+	hydrateGame(saved);
+} else {
+	updateRoundInfo();
+}

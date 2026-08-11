@@ -1,4 +1,5 @@
 import { els } from "./els";
+import { type PersistedGame, saveGame } from "./persist";
 import { clampInt, escapeHtml, normalizeText, state } from "./state";
 import type { Card } from "./types";
 
@@ -20,6 +21,8 @@ export function updateRoundInfo(): void {
 	els.roundInfo.textContent = state.dataRows.length
 		? `Rows ${start + 1}-${end} of ${state.dataRows.length} (K=${state.k}, cols=${state.selectedCols.length})`
 		: "";
+
+	saveGame();
 }
 
 export function renderColumnsSelector(): void {
@@ -127,6 +130,7 @@ export function startRound(): void {
 	renderGroups();
 
 	els.btnShuffle.disabled = false;
+	saveGame();
 }
 
 function applyDuplicateMarkers(cardsArr: Card[]): void {
@@ -430,6 +434,7 @@ function recomputeAllGroupsUI(): void {
 	}
 
 	els.btnShuffle.disabled = !hasUnsolvedCards();
+	saveGame();
 }
 
 function hasUnsolvedCards(): boolean {
@@ -492,4 +497,48 @@ export function goNext(): void {
 	const maxRound = Math.floor((state.dataRows.length - 1) / state.k);
 	state.roundIndex = Math.min(maxRound, state.roundIndex + 1);
 	startRound();
+}
+
+export function hydrateGame(p: PersistedGame): void {
+	state.delimiter = p.delimiter;
+	state.firstRowHeader = p.firstRowHeader;
+	state.headerRow = p.headerRow;
+	state.dataRows = p.dataRows;
+	state.maxCols = p.maxCols;
+	state.selectedCols = p.selectedCols;
+	state.k = p.k;
+	state.roundIndex = p.roundIndex;
+	state.cards = new Map(p.cards.map((c) => [c.cardId, c]));
+	state.groups = p.groups;
+	state.cardEls.clear();
+	state.dragging = null;
+
+	els.rowsPerRound.value = String(p.k);
+
+	renderColumnsSelector();
+	rebuildBoardFromState();
+}
+
+function rebuildBoardFromState(): void {
+	els.cardPool.innerHTML = "";
+	els.groups.innerHTML = "";
+	state.cardEls.clear();
+
+	renderGroups();
+
+	for (const card of state.cards.values()) {
+		const el = renderCard(card);
+		if (card.placed) {
+			const inner = document.querySelector(
+				`.slot[data-group-id="${card.placed.groupId}"][data-slot-index="${card.placed.slotIndex}"] .slotInner`,
+			);
+			if (inner) inner.appendChild(el);
+			else els.cardPool.appendChild(el);
+		} else {
+			els.cardPool.appendChild(el);
+		}
+	}
+
+	recomputeAllGroupsUI();
+	updateRoundInfo();
 }

@@ -11,6 +11,7 @@ export async function openAiDialog(): Promise<void> {
 	els.aiStatus.textContent = `Model: ${MODEL_NAME}`;
 	els.aiStatus.classList.remove("keyNeeded");
 	els.aiPassphrase.classList.remove("keyNeeded");
+	els.btnUnlockKey.hidden = true;
 
 	const { plain, encrypted } = await loadApiKey();
 
@@ -18,13 +19,46 @@ export async function openAiDialog(): Promise<void> {
 		els.aiApiKey.value = plain;
 		els.aiStatus.textContent = `${MODEL_NAME} · key loaded`;
 	} else if (encrypted) {
+		els.aiApiKey.value = "";
 		els.aiStatus.textContent =
-			"Encrypted key saved. Enter PIN/Passphrase to unlock.";
-		els.aiStatus.classList.add("keyNeeded");
-		els.aiPassphrase.classList.add("keyNeeded");
+			"Saved encrypted key found. Enter your PIN/passphrase and press “Unlock saved key”.";
+		els.btnUnlockKey.hidden = false;
+		els.aiPassphrase.focus();
+	} else {
+		els.aiApiKey.value = "";
+		els.aiStatus.textContent =
+			"No saved key. Enter your Mistral API key below.";
 	}
 
 	els.aiDialog.open = true;
+}
+
+export async function unlockSavedKey(): Promise<void> {
+	els.aiError.textContent = "";
+
+	const { encrypted } = await loadApiKey();
+	if (!encrypted) {
+		els.aiError.textContent = "No encrypted key is saved.";
+		return;
+	}
+
+	const passphrase = els.aiPassphrase.value.trim();
+	if (!passphrase) {
+		els.aiError.textContent = "Enter your PIN/passphrase first.";
+		return;
+	}
+
+	try {
+		const apiKey = await decryptApiKey(encrypted, passphrase);
+		els.aiApiKey.value = apiKey;
+		els.aiStatus.textContent = "Key unlocked.";
+		els.btnUnlockKey.hidden = true;
+		els.aiPassphrase.classList.remove("keyNeeded");
+		els.aiStatus.classList.remove("keyNeeded");
+	} catch {
+		els.aiError.textContent =
+			"Failed to decrypt API key with the provided PIN/passphrase.";
+	}
 }
 
 export function closeAiDialog(): void {
